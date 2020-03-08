@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel=stylesheet>
+        <meta charset=utf-8>
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <title>口罩黑網店警報器</title>
+        <link href=/static/css/app.08ae10411f702131b3a90a94e578c5d9.css rel=stylesheet>
+        <link href=/static/css/theme.css rel=stylesheet>
+    </head>
+
+    <body>
+        <div class="title-bar">
+            口罩黑網店警報器
+        </div>
+        <div id="main-content" class="content" style="display: none">
+            <div class="container center-align">
+                <img src="/static/img/mask-logo.png"></img>
+            </div>
+            <div class="container center-align title-1" id="shop-name">
+            </div>
+            <hr class="style1"/>
+            <div class="container center-align">
+                <div id="reason"></div>
+                <div class="container" id="reference"></div>
+            </div>
+        </div>
+        <div class="content-loader container">
+            <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
+        </div>
+        <div id="load-error" class="container center-align title-1" style="display: none">
+            Error
+        </div>
+        <div id="clear-box" class="container" style="display: none">
+            <div class="container center-align">
+                <img src="/static/img/mask-logo.png"></img>
+            </div>
+            <hr class="style1"/>
+            <div class="title-1"> 搵唔到相關黑店 </div>
+        </div>
+    </body>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script>
+        function getUrlVars()
+        {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for(var i = 0; i < hashes.length; i++)
+            {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+
+        function errorHandler() {
+            $(".content-loader").hide();
+            $("#load-error").show();
+        }
+
+        $(document).ready(() => {
+            const keyword = getUrlVars()["keyword"];
+            if (keyword) {
+                $.ajax({
+                    type: 'POST',
+                    url: 'https://us-central1-blueribbonsblocking.cloudfunctions.net/widgets/check-url',
+                    data: JSON.stringify({
+                        keyword: decodeURIComponent(keyword)
+                    }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: (result) => {
+                        if (result.blackListed) {
+                            $("#shop-name").html(result.name);
+                            $("#reason").html(`原因：${result.reason}`);
+                            for (let ref of Object.values(result.ref)) {
+                                $("#reference").append(`<div><a href="${ref.url}"> ${ref.title} </a></div>`);
+                            }
+                            $(".content-loader").hide();
+                            $("#main-content").show();
+                        } else {
+                            $(".content-loader").hide();
+                            $("#clear-box").show();
+                        }
+                    },
+                    error: (result) => {
+                        errorHandler();
+                    }
+                });
+            } else {
+                errorHandler();
+            }
+        });
+    </script>
+
+</html>
